@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notepad</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .notepad {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            padding: 5px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .tab {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            margin-right: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 14px;
+            padding: 5px 15px;
+        }
+
+        .tab.active {
+            background-color: #f5f5f5;
+            border-bottom-color: #f5f5f5;
+        }
+
+        .tab-close {
+            margin-left: 5px;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .tab-close:hover {
+            color: #666;
+        }
+
+        .tab-content {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+        textarea {
+            width: 100%;
+            height: calc(100% - 20px);
+            border: none;
+            resize: none;
+            font-size: 16px;
+            padding: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            box-sizing: border-box;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+        .save-as-button {
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="notepad">
+        <div class="tabs" id="tabs">
+            <!-- Tabs will be dynamically added here -->
+            <button class="tab" id="new-tab-button">+</button>
+        </div>
+        <div class="tab-content" id="tab-content">
+            <!-- Tab content will be dynamically added here -->
+        </div>
+    </div>
+
+    <script>
+        let tabCounter = 1;
+
+        function createNewTab() {
+            const tabsContainer = document.getElementById('tabs');
+            const tabContentContainer = document.getElementById('tab-content');
+
+            // Create new tab button
+            const tabButton = document.createElement('button');
+            tabButton.classList.add('tab');
+            tabButton.textContent = 'Note'; // Set the text content to "Note"
+            tabButton.dataset.tabId = tabCounter;
+
+            // Create close button for the tab
+            const closeButton = document.createElement('span');
+            closeButton.classList.add('tab-close');
+            closeButton.textContent = '×';
+            closeButton.addEventListener('click', (event) => {
+                event.stopPropagation(); // Prevent tab switch when closing
+                closeTab(event.target.parentElement);
+            });
+
+            // Append close button to the tab
+            tabButton.appendChild(closeButton);
+
+            // Create save as button for the tab
+            const saveAsButton = document.createElement('button');
+            saveAsButton.textContent = 'Save as';
+            saveAsButton.classList.add('save-as-button');
+            saveAsButton.addEventListener('click', (event) => {
+                const tabId = event.target.parentElement.dataset.tabId;
+                const tabContent = document.getElementById(`tab-${tabId}`);
+                const textToSave = tabContent.value;
+                const fileName = prompt('Enter a file name:');
+                if (fileName) {
+                    const fileType = prompt('Enter the file extension (e.g., txt, html, css):');
+                    if (fileType) {
+                        const blob = new Blob([textToSave], { type: `text/${fileType}` });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = fileName + `.${fileType}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    } else {
+                        alert('File type not specified. Operation cancelled.');
+                    }
+                } else {
+                    alert('File name not specified. Operation cancelled.');
+                }
+            });
+
+            // Append save as button to the tab
+            tabButton.appendChild(saveAsButton);
+
+            // Create corresponding tab content textarea
+            const tabContent = document.createElement('textarea');
+            tabContent.classList.add('tab-content-item');
+            tabContent.id = `tab-${tabCounter}`;
+            tabContent.placeholder = 'Start writing here...';
+
+            // Add event listener to switch tabs
+            tabButton.addEventListener('click', () => {
+                // Remove active class from all tabs
+                const allTabs = document.querySelectorAll('.tab');
+                allTabs.forEach(tab => tab.classList.remove('active'));
+                // Add active class to the clicked tab
+                tabButton.classList.add('active');
+                // Show corresponding tab content
+                const allTabContent = document.querySelectorAll('.tab-content-item');
+                allTabContent.forEach(content => content.style.display = 'none');
+                tabContent.style.display = 'block';
+            });
+
+            // Append new tab and tab content to DOM
+            tabsContainer.insertBefore(tabButton, tabsContainer.lastElementChild);
+            tabContentContainer.appendChild(tabContent);
+
+            // Increment tab counter for next tab
+            tabCounter++;
+        }
+
+        function closeTab(tab) {
+            const tabId = tab.dataset.tabId;
+            const contentId = `tab-${tabId}`;
+            const contentToRemove = document.getElementById(contentId);
+            if (contentToRemove) contentToRemove.remove();
+            tab.remove();
+        }
+
+        document.getElementById('new-tab-button').addEventListener('click', createNewTab);
+
+        // Create initial tab
+        createNewTab();
+    </script>
+</body>
+</html>
